@@ -7,32 +7,88 @@ import { SignUpDto } from './dto/signUp.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateUserDto } from './dto/update.dto';
+import * as twilio from 'twilio';
+import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
 
 
 @Injectable()
 export class AuthService {
+    private twilioClient: twilio.Twilio;
     constructor(
         @InjectModel(User.name)
         private userModel: Model<User>,
         private jwtService: JwtService
-    ) { }
+    ) {
+        const accountSid = process.env.TWILIO_ACCOUNT_SID!;
+        const authToken = process.env.TWILIO_AUTH_TOKEN!;
+        if (!accountSid || !authToken) {
+            throw new Error('Twilio credentials are not set in environment variables.');
+        }
+
+        this.twilioClient = twilio(accountSid, authToken);
+    }
 
     async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
-        const { name, email, password } = signUpDto
+        const { name, email, password, phoneNumber } = signUpDto;
+
+
+        const formattedPhoneNumber = this.formatPhoneNumber(phoneNumber);
+        console.log("faheem", formattedPhoneNumber)
+        if (!formattedPhoneNumber) {
+            throw new Error('Invalid phone number format.');
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+
+        await this.sendOtpToPhoneNumber(formattedPhoneNumber, otp);
 
         const user = await this.userModel.create({
             name,
             email,
-            password: hashedPassword
-        })
-        const token = this.jwtService.sign({ id: user._id });
-        await user.save();
+            password: hashedPassword,
+            phoneNumber: formattedPhoneNumber,
+            otp,
+        });
 
+        const token = this.jwtService.sign({ id: user._id });
         return { token };
     }
 
+    private formatPhoneNumber(phoneNumber: string): string | null {
+        try {
+
+            const phone = parsePhoneNumberFromString(phoneNumber, 'IN');
+            console.log("ggg", phone)
+            if (phone) {
+                console.log("ggggg", phone.format('E.164'))
+                return phone.format('E.164');
+            }
+        } catch (error) {
+            console.error('Error formatting phone number:', error);
+        }
+        return null;
+    }
+
+
+    private async sendOtpToPhoneNumber(phoneNumber: string, otp: string): Promise<void> {
+        const message = `Your OTP is ${otp}. Please use this to complete your sign-up process.`;
+
+        try {
+            await this.twilioClient.messages.create({
+                body: message,
+                messagingServiceSid: process.env.TWILIO_SERVICE_ID!,
+                to: phoneNumber,
+            });
+            console.log(`OTP sent to ${phoneNumber}`);
+        } catch (error) {
+            console.error('Error sending OTP:', error);
+            throw new Error('Could not send OTP. Please try again later.');
+        }
+    }
     async login(loginDto: LoginDto): Promise<{ token: string }> {
         const { email, password } = loginDto
         const user = await this.userModel.findOne({ email })
@@ -91,6 +147,11 @@ export class AuthService {
 
         return updatedUser;
     }
+
+
+
+
+
 
     async blockUser(userId: string): Promise<User> {
         const user = await this.userModel.findById(userId).exec();

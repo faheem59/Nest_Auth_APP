@@ -20,6 +20,9 @@ export class User {
 
     @Prop({ default: false })
     isBlocked: boolean
+
+    @Prop()
+    phoneNumber: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User) 
