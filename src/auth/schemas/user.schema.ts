@@ -23,6 +23,14 @@ export class User {
 
     @Prop()
     phoneNumber: string
+
+
+    @Prop()
+    resetPasswordToken: string
+
+    @Prop()
+    resetPasswordExpire: Date
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User) 

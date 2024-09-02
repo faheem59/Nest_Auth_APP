@@ -8,7 +8,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateUserDto } from './dto/update.dto';
 import * as twilio from 'twilio';
-import { parsePhoneNumberFromString, isValidPhoneNumber } from 'libphonenumber-js';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 
 @Injectable()
@@ -148,11 +148,6 @@ export class AuthService {
         return updatedUser;
     }
 
-
-
-
-
-
     async blockUser(userId: string): Promise<User> {
         const user = await this.userModel.findById(userId).exec();
         if (!user) {
@@ -173,7 +168,5 @@ export class AuthService {
         user.isBlocked = false;
         return user.save();
     }
-
-
 
 }
