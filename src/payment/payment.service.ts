@@ -18,21 +18,25 @@ export class PaymentService {
         const { shippingInfo, orderItems, itemsPrice, taxPrice, shippingPrice, totalPrice } = createOrderDTO;
 
         const userid = userId || null;
-        const newOrder = await this.orderModel.create({
-            shippingInfo,
-            orderItems,
-            itemsPrice,
-            taxPrice,
-            shippingPrice,
-            totalPrice,
-            paymentInfo: {
-                status: 'Cash On Delivery',
-                id: 'COD-' + Date.now(),
-            },
-            user: userid,
-            paidAt: new Date(),
-        });
-        return newOrder;
+        try {
+            const newOrder = await this.orderModel.create({
+                shippingInfo,
+                orderItems,
+                itemsPrice,
+                taxPrice,
+                shippingPrice,
+                totalPrice,
+                paymentInfo: {
+                    status: 'Cash On Delivery',
+                    id: 'COD-' + Date.now(),
+                },
+                user: userid,
+                paidAt: new Date(),
+            });
+            return newOrder;
+        } catch (error) {
+            throw new Error("Internal Server Error")
+        }
     }
 
 }

@@ -30,41 +30,43 @@ export class AuthService {
 
     async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
         const { name, email, password, phoneNumber } = signUpDto;
-
-
         const formattedPhoneNumber = this.formatPhoneNumber(phoneNumber);
-        console.log("faheem", formattedPhoneNumber)
-        if (!formattedPhoneNumber) {
-            throw new Error('Invalid phone number format.');
+        try {
+            if (!formattedPhoneNumber) {
+                throw new Error('Invalid phone number format.');
+            }
+
+            const existingUser = await this.userModel.findOne({ email });
+            if (existingUser) {
+                throw new Error('User with this email already exists.');
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            await this.sendOtpToPhoneNumber(formattedPhoneNumber, otp);
+
+            const user = await this.userModel.create({
+                name,
+                email,
+                password: hashedPassword,
+                phoneNumber: formattedPhoneNumber,
+                otp,
+            });
+
+            const token = this.jwtService.sign({ id: user._id.toString() });
+
+            return { token };
+        } catch (e) {
+            throw new Error('Failed to sign up user.');
         }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-
-        await this.sendOtpToPhoneNumber(formattedPhoneNumber, otp);
-
-        const user = await this.userModel.create({
-            name,
-            email,
-            password: hashedPassword,
-            phoneNumber: formattedPhoneNumber,
-            otp,
-        });
-
-        const token = this.jwtService.sign({ id: user._id });
-        return { token };
     }
-
     private formatPhoneNumber(phoneNumber: string): string | null {
         try {
 
             const phone = parsePhoneNumberFromString(phoneNumber, 'IN');
-            console.log("ggg", phone)
             if (phone) {
-                console.log("ggggg", phone.format('E.164'))
                 return phone.format('E.164');
             }
         } catch (error) {
@@ -93,80 +95,110 @@ export class AuthService {
         const { email, password } = loginDto
         const user = await this.userModel.findOne({ email })
 
-        if (!user) {
-            throw new UnauthorizedException("Invalid Email")
-        }
-        const isMatched = await bcrypt.compare(password, user.password);
+        try {
+            if (!user) {
+                throw new UnauthorizedException("Invalid Email")
+            }
+            const isMatched = await bcrypt.compare(password, user.password);
 
-        if (!isMatched) {
-            throw new UnauthorizedException('Password is mismatched');
+            if (!isMatched) {
+                throw new UnauthorizedException('Password is mismatched');
+            }
+            const token = this.jwtService.sign({ id: user._id });
+            return { token };
+
+        } catch (e) {
+            throw new Error('Failed to login user.');
         }
-        const token = this.jwtService.sign({ id: user._id });
-        return { token };
     }
 
     async getUser(userId: string): Promise<User> {
         const user = await this.userModel.findById(userId).exec();
 
-        if (!user) {
-            throw new NotFoundException('User Not Found');
+        try {
+            if (!user) {
+                throw new NotFoundException('User Not Found');
+            }
+            return user;
+        } catch (e) {
+            throw new Error("Invalid User")
         }
-        return user;
     }
 
     async getAllUsers(): Promise<User[]> {
-        return this.userModel.find().exec();
+        try {
+            return this.userModel.find().select('-password').exec();
+        } catch (e) {
+            throw new Error("Invalid Users")
+        }
     }
+
 
     async deleteUser(userId: string): Promise<User> {
         const user = await this.userModel.findById(userId).exec();
-        if (!user) {
-            throw new NotFoundException(`User for this ${userId} is Not Found`);
+        try {
+            if (!user) {
+                throw new NotFoundException(`User for this ${userId} is Not Found`);
+            }
+
+            await this.userModel.findByIdAndDelete(userId).exec();
+
+            return user;
+        } catch (e) {
+            throw new Error("Internal server error")
         }
-
-        await this.userModel.findByIdAndDelete(userId).exec();
-
-        return user;
     }
 
     async updateUser(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
         const user = await this.userModel.findById(userId).exec();
-        if (!user) {
-            throw new NotFoundException(`User for this ${userId} is Not Found`);
+        try {
+            if (!user) {
+                throw new NotFoundException(`User for this ${userId} is Not Found`);
+            }
+
+            const updatedUser = await this.userModel.findByIdAndUpdate(
+                userId,
+                updateUserDto,
+                { new: true }
+            ).exec();
+
+            if (!updatedUser) {
+                throw new NotFoundException(`User with ID ${userId} could not be updated`);
+            }
+
+            return updatedUser;
+        } catch (e) {
+            throw new Error('Internal server error')
         }
-
-        const updatedUser = await this.userModel.findByIdAndUpdate(
-            userId,
-            updateUserDto,
-            { new: true }
-        ).exec();
-
-        if (!updatedUser) {
-            throw new NotFoundException(`User with ID ${userId} could not be updated`);
-        }
-
-        return updatedUser;
     }
 
     async blockUser(userId: string): Promise<User> {
-        const user = await this.userModel.findById(userId).exec();
-        if (!user) {
-            throw new NotFoundException(`User for this ${userId} is Not Found`);
-        }
+        try {
+            const user = await this.userModel.findById(userId).exec();
+            if (!user) {
+                throw new NotFoundException(`User for this ${userId} is Not Found`);
+            }
 
-        user.isBlocked = true;
-        return user.save();
+            user.isBlocked = true;
+            return user.save();
+        } catch (e) {
+            throw new Error("Internal server error")
+        }
     }
 
     async unblockUser(userId: string): Promise<User> {
         const user = await this.userModel.findById(userId).exec();
-        if (!user) {
-            throw new NotFoundException(`User for this ${userId} is Not Found`)
+        try {
+            if (!user) {
+                throw new NotFoundException(`User for this ${userId} is Not Found`)
 
+            }
+
+            user.isBlocked = false;
+            return user.save();
+        } catch (e) {
+            throw new Error("Internal Server Error")
         }
-
-        user.isBlocked = false;
-        return user.save();
     }
 
 }

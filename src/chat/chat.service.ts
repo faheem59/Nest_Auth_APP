@@ -15,35 +15,52 @@ export class ChatService {
 
     async createMessage(id: string, chatCreateMessageDto: ChatCreateMessageDto) {
         const sender = await this.userModel.findById(id).exec();
-        console.log(sender, "dkf")
+        try {
+            if (!sender) {
+                throw new NotFoundException("Sender Not Found");
+            }
 
-        if (!sender) {
-            throw new NotFoundException("Sender Not Found");
+            const newMessage = new this.chatModel({
+                sender: id,
+                message: chatCreateMessageDto.message
+            });
+
+            return newMessage.save();
+        } catch (error) {
+            throw new Error("Internal Server Error")
         }
-
-        const newMessage = new this.chatModel({
-            sender: id,
-            message: chatCreateMessageDto.message
-        });
-
-        return newMessage.save();
     }
 
     async getMessage(): Promise<Chat[]> {
-        return this.chatModel.find().populate('sender').sort({ timestamp: 1 }).exec();
+        try {
+            return this.chatModel.find().populate('sender').sort({ timestamp: 1 }).exec();
+        } catch (error) {
+            throw new Error("Internal Server Error")
+
+        }
     }
 
 
     async getSingleChat(chatId: string): Promise<Chat> {
         const chatMessage = await this.chatModel.findById(chatId).populate('sender').exec();
-        if (!chatMessage) {
-            throw new NotFoundException(`Chat message with id ${chatId} not found`);
+        try {
+            if (!chatMessage) {
+                throw new NotFoundException(`Chat message with id ${chatId} not found`);
+            }
+            return chatMessage;
+        } catch (error) {
+            throw new Error("Internal Server Error")
+
         }
-        return chatMessage;
     }
 
     async getUserChats(userId: string): Promise<Chat[]> {
-        const userChats = await this.chatModel.find({ sender: userId }).populate('sender').sort({ timestamp: 1 }).exec();
-        return userChats;
+        try {
+            const userChats = await this.chatModel.find({ sender: userId }).populate('sender').sort({ timestamp: 1 }).exec();
+            return userChats;
+        } catch (error) {
+            throw new Error("Internal Server Error")
+
+        }
     }
 }

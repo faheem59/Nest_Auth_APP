@@ -15,65 +15,86 @@ export class ProductService {
     async createProduct(productDto: ProductDto, userId: string): Promise<Product> {
         const { name, price, description, stock, rating, images, category, numOfReviews, reviews } = productDto;
 
-        const product = await this.productModel.create({
-            name,
-            price,
-            description,
-            stock,
-            rating,
-            images,
-            category,
-            numOfReviews,
-            reviews,
-            user: userId
-        })
+        try {
+            const product = await this.productModel.create({
+                name,
+                price,
+                description,
+                stock,
+                rating,
+                images,
+                category,
+                numOfReviews,
+                reviews,
+                user: userId
+            })
 
-        await product.save();
+            await product.save();
 
-        return product;
+            return product;
+        } catch (e) {
+            throw new Error("Ineternal Server Error")
+        }
     }
 
     async getAllProduct(): Promise<Product[]> {
-        const products = await this.productModel.find().exec();
+        try {
+            const products = await this.productModel.find().exec();
 
-        return products
+            return products
+        } catch (e) {
+            throw new Error("Internal Server Error")
+        }
     }
 
     async getProductById(id: string): Promise<Product> {
         const product = await this.productModel.findById(id).exec()
-        if (!product) {
-            throw new NotFoundException('Product Not Found');
+        try {
+            if (!product) {
+                throw new NotFoundException('Product Not Found');
+            }
+            return product;
+        } catch (e) {
+            throw new Error("Internal Server Error")
         }
-        return product;
     }
 
     async updateProduct(id: string, updateProductDto: UpdateProductDTO): Promise<Product> {
         const product = await this.productModel.findById(id).exec()
-        if (!product) {
-            throw new NotFoundException(`Product for this ${id} is Not Found`);
+        try {
+            if (!product) {
+                throw new NotFoundException(`Product for this ${id} is Not Found`);
+            }
+
+            const updatedProduct = await this.productModel.findByIdAndUpdate(
+                id,
+                updateProductDto,
+                { new: true }
+            ).exec();
+
+            if (!updatedProduct) {
+                throw new NotFoundException(`Product with ID ${id} could not be updated`);
+            }
+
+            return updatedProduct;
+        } catch (e) {
+            throw new Error("Internal Server Error")
         }
-
-        const updatedProduct = await this.productModel.findByIdAndUpdate(
-            id,
-            updateProductDto,
-            { new: true }
-        ).exec();
-
-        if (!updatedProduct) {
-            throw new NotFoundException(`Product with ID ${id} could not be updated`);
-        }
-
-        return updatedProduct;
     }
 
     async deletProduct(id: string): Promise<Product> {
         const product = await this.productModel.findById(id).exec()
-        if (!product) {
-            throw new NotFoundException(`Product for this ${id} is Not Found`);
+        try {
+            if (!product) {
+                throw new NotFoundException(`Product for this ${id} is Not Found`);
+
+            }
+            await this.productModel.findByIdAndDelete(id);
+            return product;
+
+        } catch (error) {
+            throw new Error("Internal Server Error")
 
         }
-        await this.productModel.findByIdAndDelete(id);
-        return product;
-
     }
 }
