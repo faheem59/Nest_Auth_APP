@@ -1,0 +1,29 @@
+.main-navbar {
+  .top-navbar {
+    background-color: #2874f0;
+    top: 0;
+    left: 0;
+    //padding: 10px 0;
+    width: 100vw; // Ensure full width
+    position: relative;
+    .brand-name {
+      color: #fff;
+    }
+
+    .search-input {
+      background-color: #fff;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-left: 16px;
+      flex: 1;
+    }
+
+    .nav-icon {
+      color: #fff;
+
+      .MuiBadge-dot {
+        background-color: #f50057;
+      }
+    }
+  }
+}

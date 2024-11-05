@@ -1,0 +1,112 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin-top: 50px;
+  background-color: #f9f9f9;
+}
+
+.product-list {
+  display: flex; // Use flexbox
+  flex-wrap: wrap; // Allow wrapping to the next line
+  justify-content: center; // Center the items
+  gap: 20px; // Space between cards
+  padding: 0px; // Optional padding for the container
+}
+
+.categories-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.category-item {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  transition: box-shadow 0.3s ease;
+  position: relative; // Position relative for subcategory menu
+
+  &:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 10px;
+  }
+
+  span {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .subcategory-menu {
+    display: none; // Hidden by default
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-top: 10px;
+    z-index: 10;
+
+    .subcategory-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+
+      &:hover {
+        background: #f1f1f1;
+      }
+    }
+  }
+
+  &:hover .subcategory-menu {
+    display: block; // Show on hover
+  }
+}
+
+// Responsive styles
+@media (max-width: 1200px) {
+  .category-item {
+    padding: 8px; // Adjust padding
+  }
+
+  img {
+    width: 80px; // Smaller images on smaller screens
+    height: 80px;
+  }
+}
+
+@media (max-width: 992px) {
+  .categories-container {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(120px, 1fr)
+    ); // Adjust grid for smaller screens
+  }
+
+  .category-item {
+    padding: 10px; // Keep padding consistent
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 10px; // Reduce padding for smaller screens
+    margin-top: 20px; // Adjust margin
+  }
+
+  .product-list {
+    padding: 10px; // Reduce padding
+  }
+}
