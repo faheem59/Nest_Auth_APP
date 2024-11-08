@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface User {
     name: string;
     email: string;
@@ -23,6 +24,7 @@ export interface SubCategory {
     name: string;
 }
 export interface Product {
+    productId: any;
     quantity: number;
     originalPrice: number;
     currentPrice:number;

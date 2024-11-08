@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Schema as MongooseSchema, ObjectId } from 'mongoose';
 
 @Schema({
   timestamps: true,
@@ -22,6 +23,16 @@ export class User {
   @Prop()
   phoneNumber: string;
 
+  @Prop({
+    type: [
+      {
+        productId: { type: MongooseSchema.Types.ObjectId, ref: 'Product' },
+        quantity: { type: Number, default: 1 },
+      },
+    ],
+    default: [],
+  })
+  cart: { productId: ObjectId; quantity: number }[];
   @Prop()
   resetPasswordToken: string;
 

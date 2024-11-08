@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { SignUpDto } from './dto/signUp.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,6 +15,11 @@ import { UpdateUserDto } from './dto/update.dto';
 import * as twilio from 'twilio';
 import { Otp } from './schemas/otp.schema';
 import { UserResponse } from '../auth/types/user.interface';
+import {
+  AddToCartDto,
+  RemoveFromCartDto,
+  UpdateCartQuantityDto,
+} from './dto/cart.dto';
 // import { plainToClass } from 'class-transformer';
 @Injectable()
 export class AuthService {
@@ -147,6 +152,7 @@ export class AuthService {
 
     // Create the UserResponse object
     const userResponse: UserResponse = {
+      id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -245,5 +251,107 @@ export class AuthService {
     } catch (e) {
       throw new Error('Internal Server Error');
     }
+  }
+
+  async addItemToCart(
+    userId: string,
+    addToCartDto: AddToCartDto,
+  ): Promise<User> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if the product is already in the cart
+    const existingProductIndex = user.cart.findIndex(
+      (item) => item.productId.toString() === addToCartDto.productId.toString(),
+    );
+
+    if (existingProductIndex > -1) {
+      // If the product is already in the cart, update the quantity
+      user.cart[existingProductIndex].quantity += addToCartDto.quantity;
+    } else {
+      // If the product is not in the cart, add a new entry with the specified quantity
+      user.cart.push({
+        productId: addToCartDto.productId as unknown as ObjectId,
+        quantity: addToCartDto.quantity || 1, // Default to 1 if quantity is not provided
+      });
+    }
+
+    // Save the updated user object with the updated cart
+    await user.save();
+
+    return user;
+  }
+
+  async removeItemFromCart(
+    userId: string,
+    removeFromCartDto: RemoveFromCartDto,
+  ): Promise<User> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Filter out the product by productId (ignoring quantity)
+    const initialCartLength = user.cart.length;
+    user.cart = user.cart.filter(
+      (item) => item.productId.toString() !== removeFromCartDto.productId, // Match productId only
+    );
+
+    // If the cart length didn't change, the item wasn't found
+    if (user.cart.length === initialCartLength) {
+      throw new NotFoundException('Product not found in the cart');
+    }
+
+    await user.save();
+    return user;
+  }
+
+  async getCart(userId: string) {
+    const user = await this.userModel.findById(userId).populate({
+      path: 'cart.productId', // This tells Mongoose to populate the `productId` field in each cart item
+      model: 'Product', // Specify the model for `productId`
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    console.log(user, 'populated user with cart products');
+
+    // After population, `user.cart` will contain product details instead of just product IDs
+    return user.cart;
+  }
+
+  async updateCartQuantity(
+    userId: string,
+    productId: string,
+    updateCartQuantityDto: UpdateCartQuantityDto,
+  ): Promise<User> {
+    // Find the user
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Find the cart item by productId
+    const cartItemIndex = user.cart.findIndex(
+      (item) => item.productId.toString() === productId,
+    );
+
+    // If the product is not found in the cart
+    if (cartItemIndex === -1) {
+      throw new NotFoundException('Product not found in the cart');
+    }
+
+    // Update the quantity of the item
+    user.cart[cartItemIndex].quantity = updateCartQuantityDto.quantity;
+
+    // Save the updated user data
+    await user.save();
+    return user;
   }
 }

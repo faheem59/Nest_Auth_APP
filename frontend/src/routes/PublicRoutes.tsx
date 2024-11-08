@@ -5,6 +5,11 @@ import Home from "../pages/Home/Home"
 import ProductDetail from "../pages/Product/ProductDetail"
 import Wishlist from "../pages/Product/WishList"
 import Cart from "../pages/Product/Cart"
+import Checkout from "../pages/Product/Checkout"
+import OrderItemsPage from "../pages/Order/OrderItemsPage"
+import ShippingPage from "../pages/Order/Shipping"
+import PaymentPage from "../pages/Order/Payment"
+import OrderSuccessPage from "../pages/Order/OrderSuccess"
 
 const PublicRoutes = () => {
     return (
@@ -17,7 +22,11 @@ const PublicRoutes = () => {
                     <Route path="/product/:id" element={<ProductDetail />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                      <Route path="/cart" element={<Cart/>} />
-                {/* <Route path="/checkout" element={<CheckOutlined />} />  */}
+                    <Route path="/checkout" element={<Checkout />} /> 
+                     <Route path="/shipping" element={<ShippingPage/>} />
+        <Route path="/order-items" element={<OrderItemsPage/>} />
+        <Route path="/payment" element={<PaymentPage/>} />
+        <Route path="/order-success" element={<OrderSuccessPage/>} />
                     
                 </Routes>
             </Router>

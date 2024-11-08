@@ -17,6 +17,11 @@ import { Public } from './public.decorator';
 import { User } from './schemas/user.schema';
 import { UpdateUserDto } from './dto/update.dto';
 import { ApiTags } from '@nestjs/swagger';
+import {
+  AddToCartDto,
+  RemoveFromCartDto,
+  UpdateCartQuantityDto,
+} from './dto/cart.dto';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -56,6 +61,52 @@ export class AuthController {
   @Get('/users')
   async getAllUsers(): Promise<User[]> {
     return this.authService.getAllUsers();
+  }
+
+  @Post(':userId/cart')
+  async addToCart(
+    @Param('userId') userId: string,
+    @Body() addToCartDto: AddToCartDto,
+  ) {
+    const user = await this.authService.addItemToCart(userId, addToCartDto);
+    return user;
+  }
+
+  @Patch(':userId/cart/:productId')
+  async updateCartQuantity(
+    @Param('userId') userId: string,
+    @Param('productId') productId: string,
+    @Body() updateCartQuantityDto: UpdateCartQuantityDto,
+  ) {
+    const updatedUser = await this.authService.updateCartQuantity(
+      userId,
+      productId,
+      updateCartQuantityDto,
+    );
+    return updatedUser;
+  }
+
+  @Delete(':userId/cart')
+  async removeFromCart(
+    @Param('userId') userId: string,
+    @Body() removeFromCartDto: RemoveFromCartDto,
+  ) {
+    const user = await this.authService.removeItemFromCart(
+      userId,
+      removeFromCartDto,
+    );
+    return user;
+  }
+
+  @Public()
+  @Get('/:userId/cart')
+  async getUserCart(@Param('userId') userId: string) {
+    try {
+      const cart = await this.authService.getCart(userId);
+      return cart;
+    } catch (error) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   @Get('/:id')

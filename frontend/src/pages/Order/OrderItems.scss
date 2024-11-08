@@ -1,0 +1,97 @@
+/* src/pages/OrderItemsPage/OrderItems.scss */
+
+.order-items-page {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    text-align: center;
+    color: #4caf50;
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+
+      img {
+        width: 70px;
+        margin-right: 20px;
+      }
+
+      .order-item__info {
+        flex: 1;
+
+        div {
+          margin-bottom: 5px;
+        }
+      }
+    }
+  }
+
+  .order-summary {
+    margin-top: 20px;
+    padding: 20px;
+    border-top: 2px solid #ddd;
+
+    .order-summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+
+      select {
+        padding: 5px;
+        font-size: 1rem;
+      }
+
+      input {
+        padding: 8px;
+        font-size: 1rem;
+        width: 80%;
+      }
+
+      button {
+        padding: 8px 12px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+    }
+
+    .total {
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .proceed-to-payment {
+      width: 100%;
+      padding: 12px;
+      background-color: #4caf50;
+      color: white;
+      font-size: 1.2rem;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: #45a049;
+      }
+    }
+  }
+}

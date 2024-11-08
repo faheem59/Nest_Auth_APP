@@ -83,21 +83,47 @@ const ProductDetail = () => {
     setVisibleReviews((prev) => prev + 2);
   };
 
-  const handleAddToCart = () => {
-    if (!product) return;
-    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    const existingProductIndex = cart.findIndex(
-      (item: any) => item._id === product._id
+ const handleAddToCart = async () => {
+  if (!product) return;
+
+  const user = localStorage.getItem("User");
+  if (!user) {
+    alert("Please login to add items to your cart.");
+    return;
+  }
+
+  const { id: userId, token } = JSON.parse(user); // Destructure user object
+
+  try {
+    // Send the product ID and quantity (if applicable) inside the request body
+    const response = await axios.post(
+      `http://localhost:3000/auth/${userId}/cart`, // Use the correct endpoint
+      {
+        productId: product._id, // Send the product ID from the product object
+        quantity: 1, // Default quantity (this could be dynamic based on user input)
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach the token in the request headers
+        },
+      }
     );
 
-    if (existingProductIndex >= 0) {
-      cart[existingProductIndex].quantity += quantity;
+    // Check for success response
+    if (response.status === 201) {
+      alert(`${product.name} added to your cart.`);
     } else {
-      cart.push({ ...product, quantity });
+      console.error("Failed to update the cart:", response.data);
+      alert("Failed to add item to the cart.");
     }
-    localStorage.setItem("cart", JSON.stringify(cart));
-    alert(`${product.name} added to cart.`);
-  };
+  } catch (error) {
+    console.error("Error adding item to cart:", error);
+    alert("Error adding item to the cart.");
+  }
+};
+
+
+
 
   if (!product) {
     return <p>Loading product details...</p>;
